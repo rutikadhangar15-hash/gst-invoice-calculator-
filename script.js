@@ -1,131 +1,72 @@
-/* ============================================
-   GST Invoice Calculator — Application Logic
-   ============================================ */
+const userPrompt = document.getElementById("user-prompt");
+const generateBtn = document.getElementById("generate-btn");
+const imageGallery = document.getElementById("image-gallery");
 
-(function () {
-  'use strict';
+// ⚠️ REPLACE THIS WITH YOUR ACTUAL HUGGING FACE TOKEN (e.g., "hf_xxxx...")
+const HUGGING_FACE_TOKEN = "hf_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6"; // Your real token goes here! 
 
-  // --- DOM References ---
-  const baseAmountInput = document.getElementById('baseAmount');
-  const gstRateSelect   = document.getElementById('gstRate');
-  const calculateBtn    = document.getElementById('btnCalculate');
-  const clearBtn        = document.getElementById('btnClear');
-  const resultsPanel    = document.getElementById('resultsPanel');
-
-  // Result value elements
-  const elBaseAmount  = document.getElementById('resBaseAmount');
-  const elGstRate     = document.getElementById('resGstRate');
-  const elGstAmount   = document.getElementById('resGstAmount');
-  const elCgst        = document.getElementById('resCgst');
-  const elSgst        = document.getElementById('resSgst');
-  const elTotalAmount = document.getElementById('resTotalAmount');
-
-  // --- Utilities ---
-
-  /**
-   * Format a number as Indian Rupee currency string.
-   * e.g. 123456.5 → "₹1,23,456.50"
-   */
-  function formatINR(value) {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  }
-
-  /**
-   * Validate the base amount input.
-   * Returns the parsed number if valid, otherwise null.
-   */
-  function validateBaseAmount() {
-    const raw = baseAmountInput.value.trim();
-
-    if (raw === '' || isNaN(raw) || Number(raw) <= 0) {
-      // Show error feedback
-      baseAmountInput.classList.add('input-error');
-      baseAmountInput.closest('.form-group').classList.add('shake');
-
-      // Remove error styles after animation
-      setTimeout(() => {
-        baseAmountInput.closest('.form-group').classList.remove('shake');
-      }, 400);
-
-      return null;
+async function generateImages() {
+    const promptText = userPrompt.value.trim();
+    if (!promptText) {
+        alert("Please enter a description first!");
+        return;
     }
 
-    baseAmountInput.classList.remove('input-error');
-    return parseFloat(raw);
-  }
+    // Change button state to loading
+    generateBtn.disabled = true;
+    generateBtn.innerText = "Generating...";
 
-  // --- Core Calculation ---
+    // Clear the older icons and show loading placeholders
+    imageGallery.innerHTML = `
+        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
+    `;
 
-  function calculate() {
-    const baseAmount = validateBaseAmount();
-    if (baseAmount === null) {
-      resultsPanel.classList.remove('visible');
-      return;
+    try {
+        // We make a request to the Hugging Face Inference API (Stable Diffusion)
+        const response = await fetch(
+            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${HUGGING_FACE_TOKEN}`
+                },
+                body: JSON.stringify({ inputs: promptText }),
+            }
+        );
+
+        if (!response.ok) throw new Error("Failed to generate images. Check your API token!");
+
+        const blob = await response.blob();
+        const imgUrl = URL.createObjectURL(blob);
+
+        // Update the display grid with the generated image copies
+        imageGallery.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+            imageGallery.innerHTML += `
+                <div class="img-card">
+                    <img src="${imgUrl}" alt="AI Generated Image ${i + 1}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        alert("Error: " + error.message);
+        // Put back standard icons if it fails
+        imageGallery.innerHTML = `
+            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 1</p></div>
+            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 2</p></div>
+            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 3</p></div>
+            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 4</p></div>
+        `;
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerText = "Generate";
     }
+}
 
-    const gstRate    = parseFloat(gstRateSelect.value);
-    const gstAmount  = (baseAmount * gstRate) / 100;
-    const cgst       = gstAmount / 2;
-    const sgst       = gstAmount / 2;
-    const totalAmount = baseAmount + gstAmount;
-
-    // Populate result fields
-    elBaseAmount.textContent  = formatINR(baseAmount);
-    elGstRate.textContent     = gstRate + '%';
-    elGstAmount.textContent   = formatINR(gstAmount);
-    elCgst.textContent        = formatINR(cgst);
-    elSgst.textContent        = formatINR(sgst);
-    elTotalAmount.textContent = formatINR(totalAmount);
-
-    // Reveal results panel
-    resultsPanel.classList.add('visible');
-  }
-
-  // --- Clear / Reset ---
-
-  function clearForm() {
-    baseAmountInput.value = '';
-    gstRateSelect.selectedIndex = 2; // Default to 18%
-    baseAmountInput.classList.remove('input-error');
-    resultsPanel.classList.remove('visible');
-    baseAmountInput.focus();
-  }
-
-  // --- Event Listeners ---
-
-  calculateBtn.addEventListener('click', calculate);
-  clearBtn.addEventListener('click', clearForm);
-
-  // Live recalculate when inputs change (only if results are already visible)
-  baseAmountInput.addEventListener('input', function () {
-    baseAmountInput.classList.remove('input-error');
-    if (resultsPanel.classList.contains('visible')) {
-      calculate();
-    }
-  });
-
-  gstRateSelect.addEventListener('change', function () {
-    if (resultsPanel.classList.contains('visible')) {
-      calculate();
-    }
-  });
-
-  // Allow Enter key to trigger calculation
-  baseAmountInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      calculate();
-    }
-  });
-
-  // Set current year in footer
-  const yearEl = document.getElementById('footerYear');
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
-  }
-})();
+// Add the click listener to your button
+generateBtn.addEventListener("click", generateImages);
