@@ -2,8 +2,23 @@ const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
-// ⚠️ REPLACE THIS WITH YOUR ACTUAL HUGGING FACE TOKEN (e.g., "hf_xxxx...")
-const HUGGING_FACE_TOKEN = "hf_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6"; // Your real token goes here! 
+// Put your real hf_... token key inside these quotes!
+const HUGGING_FACE_TOKEN = "hf_aBc1DeF2gHi3JkLmNoPqRsTuVwXyZ";
+
+async function query(data) {
+    // This handles the connection cleanly without long complex links
+    const response = await fetch(
+        "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+        {
+            headers: { Authorization: `Bearer ${HUGGING_FACE_TOKEN}` },
+            method: "POST",
+            body: JSON.stringify(data),
+        }
+    );
+    if (!response.ok) throw new Error("API Error. Please check your token!");
+    const result = await response.blob();
+    return result;
+}
 
 async function generateImages() {
     const promptText = userPrompt.value.trim();
@@ -12,11 +27,9 @@ async function generateImages() {
         return;
     }
 
-    // Change button state to loading
     generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
 
-    // Clear the older icons and show loading placeholders
     imageGallery.innerHTML = `
         <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
         <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
@@ -25,37 +38,19 @@ async function generateImages() {
     `;
 
     try {
-        // We make a request to the Hugging Face Inference API (Stable Diffusion)
-        const response = await fetch(
-            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${HUGGING_FACE_TOKEN}`
-                },
-                body: JSON.stringify({ inputs: promptText }),
-            }
-        );
-
-        if (!response.ok) throw new Error("Failed to generate images. Check your API token!");
-
-        const blob = await response.blob();
+        const blob = await query({ "inputs": promptText });
         const imgUrl = URL.createObjectURL(blob);
 
-        // Update the display grid with the generated image copies
         imageGallery.innerHTML = "";
         for (let i = 0; i < 4; i++) {
             imageGallery.innerHTML += `
                 <div class="img-card">
-                    <img src="${imgUrl}" alt="AI Generated Image ${i + 1}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    <img src="${imgUrl}" alt="AI Image" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
                 </div>
             `;
         }
-
     } catch (error) {
-        alert("Error: " + error.message);
-        // Put back standard icons if it fails
+        alert(error.message);
         imageGallery.innerHTML = `
             <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 1</p></div>
             <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 2</p></div>
@@ -68,5 +63,4 @@ async function generateImages() {
     }
 }
 
-// Add the click listener to your button
 generateBtn.addEventListener("click", generateImages);
