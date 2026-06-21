@@ -12,7 +12,7 @@ async function generateImages() {
     generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
 
-    // Show loading status
+    // Show loading text
     imageGallery.innerHTML = `
         <div class="img-card loading"><p>Creating...</p></div>
         <div class="img-card loading"><p>Creating...</p></div>
@@ -21,20 +21,24 @@ async function generateImages() {
     `;
 
     try {
-        // Using a completely free, fast public image source that requires no tokens!
         imageGallery.innerHTML = "";
+        
+        // This loops 4 times to create 4 different AI images
         for (let i = 1; i <= 4; i++) {
-            const uniqueId = Math.floor(Math.random() * 10000);
-            const imgUrl = `https://picsum.photos/500/500?random=${uniqueId}`;
+            const cleanPrompt = encodeURIComponent(promptText);
+            const randomSeed = Math.floor(Math.random() * 999999);
+            
+            // This smart link actually reads your prompt text and generates real AI art!
+            const imgUrl = `https://image.pollinations.ai/p/${cleanPrompt}?width=500&height=500&seed=${randomSeed}&nofeed=true`;
             
             imageGallery.innerHTML += `
                 <div class="img-card">
-                    <img src="${imgUrl}" alt="Generated Image ${i}">
+                    <img src="${imgUrl}" alt="AI Image ${i}">
                 </div>
             `;
         }
     } catch (error) {
-        alert("Failed to fetch image. Please try again.");
+        alert("Something went wrong. Please try again.");
     } finally {
         generateBtn.disabled = false;
         generateBtn.innerText = "Generate";
