@@ -3,7 +3,7 @@ const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
 // Put your real hf_... token key inside these quotes!
-const HUGGING_FACE_TOKEN = "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";
+const HUGGING_FACE_TOKEN = "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";
 
 async function query(data) {
     // Using a highly stable model endpoint
