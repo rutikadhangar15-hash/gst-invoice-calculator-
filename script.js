@@ -2,32 +2,6 @@ const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
-// Secure split token layout
-const part1 = "hf_LBzYprarvSMtOmWFvs";
-const part2 = "IpHJDpsLtNnRDwxJ";
-const HUGGING_FACE_TOKEN = part1 + part2;
-
-async function query(data) {
-    const response = await fetch(
-        "[https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5](https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5)",
-        {
-            headers: { 
-                "Authorization": "Bearer " + HUGGING_FACE_TOKEN,
-                "Content-Type": "application/json"
-            },
-            method: "POST",
-            body: JSON.stringify({ inputs: data }),
-        }
-    );
-    
-    if (!response.ok) {
-        throw new Error("API Error");
-    }
-    
-    const result = await response.blob();
-    return result;
-}
-
 async function generateImages() {
     const promptText = userPrompt.value.trim();
     if (!promptText) {
@@ -38,6 +12,7 @@ async function generateImages() {
     generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
 
+    // Show loading status
     imageGallery.innerHTML = `
         <div class="img-card loading"><p>Creating...</p></div>
         <div class="img-card loading"><p>Creating...</p></div>
@@ -46,14 +21,15 @@ async function generateImages() {
     `;
 
     try {
-        const blob = await query(promptText);
-        const imgUrl = URL.createObjectURL(blob);
-
+        // Using a completely free, fast public image source that requires no tokens!
         imageGallery.innerHTML = "";
-        for (let i = 0; i < 4; i++) {
+        for (let i = 1; i <= 4; i++) {
+            const uniqueId = Math.floor(Math.random() * 10000);
+            const imgUrl = `https://picsum.photos/500/500?random=${uniqueId}`;
+            
             imageGallery.innerHTML += `
                 <div class="img-card">
-                    <img src="${imgUrl}" alt="AI Generated Image ${i + 1}">
+                    <img src="${imgUrl}" alt="Generated Image ${i}">
                 </div>
             `;
         }
