@@ -1,7 +1,6 @@
 const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
-
 function generateImages() {
     const promptText = userPrompt.value.trim();
     if (!promptText) {
@@ -10,26 +9,28 @@ function generateImages() {
     }
 
     generateBtn.innerText = "Generating...";
-    
-    // 1. Clear the gallery
     imageGallery.innerHTML = "";
 
-    // 2. Create the 4 containers first
+    // Create the 4 containers first
     for (let i = 0; i < 4; i++) {
-        imageGallery.innerHTML += `<div class="img-card" id="card-${i}">Loading...</div>`;
+        const card = document.createElement("div");
+        card.className = "img-card";
+        card.innerHTML = "Loading...";
+        card.id = `card-${i}`;
+        imageGallery.appendChild(card);
     }
 
-    // 3. Populate them with images
+    // Populate them with images
     for (let i = 0; i < 4; i++) {
         const seed = Math.floor(Math.random() * 100000);
-        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${seed}&width=500&height=500`;
+        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${seed}&width=500&height=500&nologo=true`;
         
         const card = document.getElementById(`card-${i}`);
-        const img = document.createElement('img');
+        const img = new Image();
         img.src = imgUrl;
         
         img.onload = () => {
-            card.innerHTML = ""; // Clear "Loading..."
+            card.innerHTML = "";
             card.appendChild(img);
         };
         
@@ -40,4 +41,5 @@ function generateImages() {
     
     generateBtn.innerText = "Generate";
 }
+
 generateBtn.addEventListener("click", generateImages);
