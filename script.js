@@ -4,10 +4,19 @@ const imageGallery = document.getElementById("image-gallery");
 
 async function generateImages() {
     const promptText = userPrompt.value.trim();
-    if (!promptText) {
-        alert("Please enter a description first!");
-        return;
+    if (!promptText) return;
+
+    generateBtn.innerText = "Generating...";
+    imageGallery.innerHTML = ""; // Clear everything
+
+    // Create 4 simple images
+    for (let i = 0; i < 4; i++) {
+        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${Math.random()}`;
+        imageGallery.innerHTML += `<div class="img-card"><img src="${imgUrl}"></div>`;
     }
+    
+    generateBtn.innerText = "Generate";
+}
 
     // 1. Disable button and clear gallery
     generateBtn.disabled = true;
