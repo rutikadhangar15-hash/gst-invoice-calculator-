@@ -1,4 +1,4 @@
-```javascript
+
 const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
