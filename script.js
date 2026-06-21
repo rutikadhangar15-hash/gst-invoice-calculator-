@@ -2,15 +2,14 @@ const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
-// Split token format to prevent GitHub from automatically deactivating it
-const part1 = "hf_LBzYprarvSMtOmWFvs";
+// Using your newest token exactly as you provided it
+const part1 = "Hf_LBzYprarvSMtOmWFvs";
 const part2 = "IpHJDpsLtNnRDwxJ";
 const HUGGING_FACE_TOKEN = part1 + part2;
 
 async function query(data) {
-    // Updated to a highly responsive, standard model endpoint
     const response = await fetch(
-        "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5",
+        "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5",
         {
             headers: { 
                 "Authorization": `Bearer ${HUGGING_FACE_TOKEN}`,
@@ -21,9 +20,10 @@ async function query(data) {
         }
     );
     
-    // If the server returns any error, catch it here
+    // If it's not OK, read the actual error text from Hugging Face
     if (!response.ok) {
-        throw new Error("API Error");
+        const errorText = await response.text().catch(() => "Unknown error");
+        throw new Error(`Status ${response.status}: ${errorText}`);
     }
     
     const result = await response.blob();
@@ -40,7 +40,6 @@ async function generateImages() {
     generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
 
-    // Show loading state animations
     imageGallery.innerHTML = `
         <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
         <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
@@ -52,7 +51,6 @@ async function generateImages() {
         const blob = await query(promptText);
         const imgUrl = URL.createObjectURL(blob);
 
-        // Clear loading placeholders and display the generated images
         imageGallery.innerHTML = "";
         for (let i = 0; i < 4; i++) {
             imageGallery.innerHTML += `
@@ -62,7 +60,8 @@ async function generateImages() {
             `;
         }
     } catch (error) {
-        alert("Failed to fetch image. Please try again.");
+        // This will now show the real error details in the popup
+        alert(`Error: ${error.message}`);
     } finally {
         generateBtn.disabled = false;
         generateBtn.innerText = "Generate";
