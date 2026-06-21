@@ -10,21 +10,34 @@ function generateImages() {
     }
 
     generateBtn.innerText = "Generating...";
+    
+    // 1. Clear the gallery
     imageGallery.innerHTML = "";
 
-    // We add a tiny delay to each image so the browser doesn't block them
+    // 2. Create the 4 containers first
+    for (let i = 0; i < 4; i++) {
+        imageGallery.innerHTML += `<div class="img-card" id="card-${i}">Loading...</div>`;
+    }
+
+    // 3. Populate them with images
     for (let i = 0; i < 4; i++) {
         const seed = Math.floor(Math.random() * 100000);
         const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${seed}&width=500&height=500`;
         
-        imageGallery.innerHTML += `
-            <div class="img-card">
-                <img src="${imgUrl}" alt="AI Image" onerror="this.style.display='none'">
-            </div>
-        `;
+        const card = document.getElementById(`card-${i}`);
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        
+        img.onload = () => {
+            card.innerHTML = ""; // Clear "Loading..."
+            card.appendChild(img);
+        };
+        
+        img.onerror = () => {
+            card.innerHTML = "Failed to load";
+        };
     }
     
     generateBtn.innerText = "Generate";
 }
-
 generateBtn.addEventListener("click", generateImages);
