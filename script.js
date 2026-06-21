@@ -38,7 +38,7 @@ async function generateImages() {
     `;
 
     try {
-        const blob = await query({ "inputs": promptText });
+        const blob = await query (promptText);
         const imgUrl = URL.createObjectURL(blob);
 
         imageGallery.innerHTML = "";
