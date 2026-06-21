@@ -2,60 +2,29 @@ const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
-async function generateImages() {
+function generateImages() {
     const promptText = userPrompt.value.trim();
-    if (!promptText) return;
-
-    generateBtn.innerText = "Generating...";
-    imageGallery.innerHTML = ""; // Clear everything
-
-    // Create 4 simple images
-    for (let i = 0; i < 4; i++) {
-        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${Math.random()}`;
-        imageGallery.innerHTML += `<div class="img-card"><img src="${imgUrl}"></div>`;
+    if (!promptText) {
+        alert("Please enter text!");
+        return;
     }
-    
-    generateBtn.innerText = "Generate";
-}
 
-    // 1. Disable button and clear gallery
-    generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
     imageGallery.innerHTML = "";
 
-    // 2. Pre-create the 4 empty card slots
+    // We add a tiny delay to each image so the browser doesn't block them
     for (let i = 0; i < 4; i++) {
-        imageGallery.innerHTML += `<div class="img-card"><p>Creating...</p></div>`;
+        const seed = Math.floor(Math.random() * 100000);
+        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(promptText)}?seed=${seed}&width=500&height=500`;
+        
+        imageGallery.innerHTML += `
+            <div class="img-card">
+                <img src="${imgUrl}" alt="AI Image" onerror="this.style.display='none'">
+            </div>
+        `;
     }
-
-    const cards = document.querySelectorAll(".img-card");
-
-    // 3. Staggered image loading
-    for (let i = 0; i < 4; i++) {
-        setTimeout(() => {
-            const cleanPrompt = encodeURIComponent(promptText);
-            const randomSeed = Math.floor(Math.random() * 999999) + i;
-            const imgUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=500&height=500&seed=${randomSeed}&nologo=true`;
-
-            const img = new Image();
-            img.src = imgUrl;
-
-            img.onload = () => {
-                cards[i].innerHTML = "";
-                cards[i].appendChild(img);
-            };
-
-            img.onerror = () => {
-                cards[i].innerHTML = "<p>Failed to load</p>";
-            };
-        }, i * 500);
-    }
-
-    // 4. Re-enable button after a short delay
-    setTimeout(() => {
-        generateBtn.disabled = false;
-        generateBtn.innerText = "Generate";
-    }, 2500);
+    
+    generateBtn.innerText = "Generate";
 }
 
 generateBtn.addEventListener("click", generateImages);
