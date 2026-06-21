@@ -9,7 +9,7 @@ const HUGGING_FACE_TOKEN = part1 + part2;
 
 async function query(data) {
     const response = await fetch(
-        "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5",
+        "[https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5](https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-v1-5)",
         {
             headers: { 
                 "Authorization": "Bearer " + HUGGING_FACE_TOKEN,
