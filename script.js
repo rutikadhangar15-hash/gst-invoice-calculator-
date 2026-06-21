@@ -8,11 +8,11 @@ const HUGGING_FACE_TOKEN = "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";
 async function query(data) {
     // This handles the connection cleanly without long complex links
     const response = await fetch(
-        "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
-        {
+        
+        {"https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
             headers: { Authorization: `Bearer ${HUGGING_FACE_TOKEN}` },
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify ({ inputs:data }),
         }
     );
     if (!response.ok) throw new Error("API Error. Please check your token!");
