@@ -20,26 +20,32 @@ async function generateImages() {
     }
 
     const cards = document.querySelectorAll(".img-card");
-
-    // 3. Fetch images one by one
+// 3. Fetch images with a more stable URL structure
     for (let i = 0; i < 4; i++) {
         const cleanPrompt = encodeURIComponent(promptText);
         const randomSeed = Math.floor(Math.random() * 999999) + i;
-        const imgUrl = `https://image.pollinations.ai/p/${cleanPrompt}?width=500&height=500&seed=${randomSeed}&nofeed=true`;
+        const imgUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=500&height=500&seed=${randomSeed}&nologo=true`;
         
         const img = new Image();
         img.src = imgUrl;
 
         img.onload = () => {
-            cards[i].innerHTML = ""; // Remove "Creating..."
-            cards[i].appendChild(img); // Add the actual image
+            cards[i].innerHTML = ""; 
+            cards[i].appendChild(img);
         };
 
-        img.onerror = () => {
-            cards[i].innerHTML = "<p>Failed to load</p>";
+        img.onerror = function() {
+            // Give it one more try if it fails
+            cards[i].innerHTML = "<p>Retrying...</p>";
+            const retryImg = new Image();
+            retryImg.src = imgUrl + "&retry=" + Date.now();
+            retryImg.onload = () => {
+                cards[i].innerHTML = "";
+                cards[i].appendChild(retryImg);
+            };
         };
-    }
 
+    
     // 4. Reset button after initiating the requests
     generateBtn.disabled = false;
     generateBtn.innerText = "Generate";
