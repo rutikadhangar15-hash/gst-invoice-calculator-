@@ -6,13 +6,13 @@ const imageGallery = document.getElementById("image-gallery");
 const HUGGING_FACE_TOKEN = "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";
 
 async function query(data) {
-    // This handles the connection cleanly without long complex links
+    // Using a highly stable model endpoint
     const response = await fetch(
-        
-        {"https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+        "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+        {
             headers: { Authorization: `Bearer ${HUGGING_FACE_TOKEN}` },
             method: "POST",
-            body: JSON.stringify ({ inputs:data }),
+            body: JSON.stringify({ inputs: data }),
         }
     );
     if (!response.ok) throw new Error("API Error. Please check your token!");
@@ -30,33 +30,30 @@ async function generateImages() {
     generateBtn.disabled = true;
     generateBtn.innerText = "Generating...";
 
+    // Show loading state placeholder cards
     imageGallery.innerHTML = `
-        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
-        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
-        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
-        <div class="img-card loading"><div class="spinner">⏳</div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
+        <div class="img-card loading"><div class="spinner"></div><p>Creating...</p></div>
     `;
 
     try {
-        const blob = await query (promptText);
+        // Send plain text string directly to query function
+        const blob = await query(promptText);
         const imgUrl = URL.createObjectURL(blob);
 
+        // Render the 4 generated cards with the actual image source
         imageGallery.innerHTML = "";
         for (let i = 0; i < 4; i++) {
             imageGallery.innerHTML += `
                 <div class="img-card">
-                    <img src="${imgUrl}" alt="AI Image" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    <img src="${imgUrl}" alt="AI Generated Image ${i + 1}">
                 </div>
             `;
         }
     } catch (error) {
-        alert(error.message);
-        imageGallery.innerHTML = `
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 1</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 2</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 3</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 4</p></div>
-        `;
+        alert("Failed to fetch image. Please try again.");
     } finally {
         generateBtn.disabled = false;
         generateBtn.innerText = "Generate";
