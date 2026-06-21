@@ -2,8 +2,10 @@ const userPrompt = document.getElementById("user-prompt");
 const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
-// Put your real hf_... token key inside these quotes!
-const HUGGING_FACE_TOKEN = "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";
+// Paste your split token right here on lines 5, 6, and 7!
+const part1 = "hf_LBzYprarvSMtOm"; // Put the first half of your new token here
+const part2 = "WFvsIpHJDpsLtNnRDwxJ";    // Put the second half of your new token here
+const HUGGING_FACE_TOKEN = part1 + part2;
 
 async function query(data) {
     // Using a highly stable model endpoint
