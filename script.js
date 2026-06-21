@@ -3,7 +3,7 @@ const generateBtn = document.getElementById("generate-btn");
 const imageGallery = document.getElementById("image-gallery");
 
 // Put your real hf_... token key inside these quotes!
-const HUGGING_FACE_TOKEN = "hf_aBc1DeF2gHi3JkLmNoPqRsTuVwXyZ";
+const HUGGING_FACE_TOKEN = "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";
 
 async function query(data) {
     // This handles the connection cleanly without long complex links
