@@ -1,145 +1,225 @@
-const userPrompt = document.getElementById("user-prompt");
-const generateBtn = document.getElementById("generate-btn");
-const imageGallery = document.getElementById("image-gallery");
-const imageCountSelect = document.getElementById("image-count");
-const statusMessage = document.getElementById("status-message");
+const itemsBody = document.getElementById("itemsBody");
+const addItemBtn = document.getElementById("addItemBtn");
 
-function createCard(index) {
-  const card = document.createElement("div");
-  card.className = "img-card";
-  card.id = `card-${index}`;
+const subtotalElement = document.getElementById("subtotal");
+const taxAmountElement = document.getElementById("taxAmount");
+const grandTotalElement = document.getElementById("grandTotal");
+const taxLabelElement = document.getElementById("taxLabel");
 
-  card.innerHTML = `
-    <div class="loading-text">
-      <div class="placeholder-icon">⏳</div>
-      <p>Generating Image ${index + 1}...</p>
-    </div>
-  `;
+const generateBtn = document.getElementById("generateBtn");
+const invoicePreview = document.getElementById("invoicePreview");
 
-  imageGallery.appendChild(card);
+let items = [
+  {
+    name: "",
+    quantity: 1,
+    price: 0,
+    gst: 18
+  }
+];
+
+function formatCurrency(amount) {
+  return `₹${amount.toFixed(2)}`;
 }
 
-function showError(index, message) {
-  const card = document.getElementById(`card-${index}`);
+function renderItems() {
+  itemsBody.innerHTML = "";
 
-  if (!card) return;
+  items.forEach((item, index) => {
+    const row = document.createElement("tr");
 
-  card.innerHTML = `
-    <div class="error-text">
-      <div class="placeholder-icon">⚠️</div>
-      <p>Image ${index + 1} not generated</p>
-      <small>${message}</small>
-    </div>
-  `;
-}
+    const itemTotal = item.quantity * item.price;
+    const gstAmount = itemTotal * (item.gst / 100);
+    const totalWithGst = itemTotal + gstAmount;
 
-function loadImageWithTimeout(index, imageUrl) {
-  return new Promise((resolve) => {
-    const card = document.getElementById(`card-${index}`);
-    const img = new Image();
+    row.innerHTML = `
+      <td>
+        <input
+          class="item-input"
+          type="text"
+          value="${item.name}"
+          placeholder="Item name"
+          oninput="updateItem(${index}, 'name', this.value)"
+        />
+      </td>
 
-    let done = false;
+      <td>
+        <input
+          class="item-input"
+          type="number"
+          min="1"
+          value="${item.quantity}"
+          oninput="updateItem(${index}, 'quantity', this.value)"
+        />
+      </td>
 
-    const finish = (success, message = "") => {
-      if (done) return;
+      <td>
+        <input
+          class="item-input"
+          type="number"
+          min="0"
+          value="${item.price}"
+          oninput="updateItem(${index}, 'price', this.value)"
+        />
+      </td>
 
-      done = true;
-      clearTimeout(timeout);
+      <td>
+        <select onchange="updateItem(${index}, 'gst', this.value)">
+          <option value="0" ${item.gst == 0 ? "selected" : ""}>0%</option>
+          <option value="5" ${item.gst == 5 ? "selected" : ""}>5%</option>
+          <option value="12" ${item.gst == 12 ? "selected" : ""}>12%</option>
+          <option value="18" ${item.gst == 18 ? "selected" : ""}>18%</option>
+          <option value="28" ${item.gst == 28 ? "selected" : ""}>28%</option>
+        </select>
+      </td>
 
-      if (success) {
-        card.innerHTML = "";
-        card.appendChild(img);
-      } else {
-        showError(index, message);
-      }
+      <td>${formatCurrency(totalWithGst)}</td>
 
-      resolve(success);
-    };
+      <td>
+        <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+      </td>
+    `;
 
-    const timeout = setTimeout(() => {
-      img.onload = null;
-      img.onerror = null;
-      img.src = "";
-      finish(false, "Server timeout. Please try again.");
-    }, 10000);
-
-    img.onload = () => {
-      finish(true);
-    };
-
-    img.onerror = () => {
-      finish(false, "Image API failed.");
-    };
-
-    img.src = imageUrl;
-    img.alt = `AI Image ${index + 1}`;
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "cover";
+    itemsBody.appendChild(row);
   });
+
+  calculateTotals();
 }
 
-async function generateImages() {
-  const prompt = userPrompt.value.trim();
-  const count = Number(imageCountSelect.value);
+function updateItem(index, field, value) {
+  if (field === "name") {
+    items[index][field] = value;
+  } else {
+    items[index][field] = Number(value);
+  }
 
-  if (!prompt) {
-    alert("Please enter a prompt.");
-    userPrompt.focus();
+  renderItems();
+}
+
+function removeItem(index) {
+  if (items.length === 1) {
+    alert("At least one item is required.");
     return;
   }
 
-  generateBtn.disabled = true;
-  generateBtn.textContent = "Generating...";
-  statusMessage.textContent = "Generating images one by one. Please wait...";
-
-  imageGallery.innerHTML = "";
-
-  for (let i = 0; i < count; i++) {
-    createCard(i);
-  }
-
-  let successCount = 0;
-
-  try {
-    for (let i = 0; i < count; i++) {
-      const seed = Date.now() + i + Math.floor(Math.random() * 100000);
-
-      const imageUrl =
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-        `?width=512&height=512&seed=${seed}&nologo=true`;
-
-      statusMessage.textContent =
-        `Generating image ${i + 1} of ${count}...`;
-
-      const success = await loadImageWithTimeout(i, imageUrl);
-
-      if (success) {
-        successCount++;
-      }
-
-      // Wait 2 seconds before asking for the next image
-      if (i < count - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
-    }
-
-    statusMessage.textContent =
-      `${successCount} of ${count} image(s) generated.`;
-  } catch (error) {
-    console.error(error);
-    statusMessage.textContent = "Something went wrong. Try again.";
-  } finally {
-    generateBtn.disabled = false;
-    generateBtn.textContent = "Generate";
-  }
-}
+  items.splice(index, 1);
+  renderItems();
 }
 
-generateBtn.addEventListener("click", generateImages);
+function calculateTotals() {
+  let subtotal = 0;
+  let totalTax = 0;
 
-userPrompt.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    generateImages();
+  items.forEach((item) => {
+    const itemAmount = item.quantity * item.price;
+    const gstAmount = itemAmount * (item.gst / 100);
+
+    subtotal += itemAmount;
+    totalTax += gstAmount;
+  });
+
+  const grandTotal = subtotal + totalTax;
+  const gstType = document.querySelector('input[name="gstType"]:checked').value;
+
+  if (gstType === "intra") {
+    taxLabelElement.textContent = `CGST + SGST (₹${(totalTax / 2).toFixed(2)} + ₹${(totalTax / 2).toFixed(2)})`;
+  } else {
+    taxLabelElement.textContent = "IGST";
   }
+
+  subtotalElement.textContent = formatCurrency(subtotal);
+  taxAmountElement.textContent = formatCurrency(totalTax);
+  grandTotalElement.textContent = formatCurrency(grandTotal);
+
+  return { subtotal, totalTax, grandTotal, gstType };
+}
+
+function generateInvoice() {
+  const businessName =
+    document.getElementById("businessName").value || "Your Business Name";
+
+  const customerName =
+    document.getElementById("customerName").value || "Walk-in Customer";
+
+  const invoiceNumber =
+    document.getElementById("invoiceNumber").value || "INV-001";
+
+  const invoiceDate =
+    document.getElementById("invoiceDate").value ||
+    new Date().toISOString().split("T")[0];
+
+  const totals = calculateTotals();
+
+  document.getElementById("previewBusinessName").textContent = businessName;
+  document.getElementById("previewCustomerName").textContent = customerName;
+  document.getElementById("previewInvoiceNumber").textContent = invoiceNumber;
+  document.getElementById("previewInvoiceDate").textContent = invoiceDate;
+
+  const previewItemsBody = document.getElementById("previewItemsBody");
+  previewItemsBody.innerHTML = "";
+
+  items.forEach((item) => {
+    const itemAmount = item.quantity * item.price;
+    const gstAmount = itemAmount * (item.gst / 100);
+    const total = itemAmount + gstAmount;
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${item.name || "Unnamed Item"}</td>
+      <td>${item.quantity}</td>
+      <td>${formatCurrency(item.price)}</td>
+      <td>${item.gst}%</td>
+      <td>${formatCurrency(total)}</td>
+    `;
+
+    previewItemsBody.appendChild(row);
+  });
+
+  document.getElementById("previewSubtotal").textContent =
+    formatCurrency(totals.subtotal);
+
+  document.getElementById("previewTaxAmount").textContent =
+    formatCurrency(totals.totalTax);
+
+  document.getElementById("previewGrandTotal").textContent =
+    formatCurrency(totals.grandTotal);
+
+  const previewTaxLabel = document.getElementById("previewTaxLabel");
+
+  if (totals.gstType === "intra") {
+    previewTaxLabel.innerHTML = `
+      CGST: <strong>${formatCurrency(totals.totalTax / 2)}</strong>
+      + SGST: <strong>${formatCurrency(totals.totalTax / 2)}</strong>
+    `;
+  } else {
+    previewTaxLabel.innerHTML = `
+      IGST: <strong>${formatCurrency(totals.totalTax)}</strong>
+    `;
+  }
+
+  invoicePreview.classList.remove("hidden");
+  invoicePreview.scrollIntoView({ behavior: "smooth" });
+}
+
+addItemBtn.addEventListener("click", () => {
+  items.push({
+    name: "",
+    quantity: 1,
+    price: 0,
+    gst: 18
+  });
+
+  renderItems();
 });
+
+document.querySelectorAll('input[name="gstType"]').forEach((radio) => {
+  radio.addEventListener("change", calculateTotals);
+});
+
+generateBtn.addEventListener("click", generateInvoice);
+
+document.getElementById("invoiceDate").value =
+  new Date().toISOString().split("T")[0];
+
+renderItems();
