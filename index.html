@@ -1,50 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator Tool</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GST Invoice Calculator</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-    <div class="container">
-        <!-- Header Section -->
-        <header>
-            <h1>AI Image Generator Tool JavaScript</h1>
-            <p>Convert your text into an image within a second using this JavaScript-powered AI Image Generator tool.</p>
-        </header>
-
-        <!-- Search / Input Section -->
-        <div class="search-box">
-            <input type="text" id="user-prompt" placeholder="Describe what you want to see...">
-            
-            <div class="controls">
-                <select id="image-count">
-                    <option value="1">1 Image</option>
-                    <option value="2">2 Images</option>
-                    <option value="3">3 Images</option>
-                    <option value="4" selected>4 Images</option>
-                </select>
-                <button id="generate-btn"
-                    type="button">Generate</button>
-            </div>
-        </div>
-
-        <!-- Image Display Grid Section -->
-        <p id="status-message"></p>
-        
-        <div class="image-grid" 
-            id="image-gallery">
-            
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 1</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 2</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 3</p></div>
-            <div class="img-card"><div class="placeholder-icon">🖼️</div><p>Image 4</p></div>
-        </div>
+  <header>
+    <div>
+      <h1>GST Invoice Calculator</h1>
+      <p>Create invoices and calculate GST instantly.</p>
     </div>
 
-    <!-- Linking the JavaScript file -->
-    <script src="script.js"></script>
+    <a
+      class="digital-heroes-btn"
+      href="https://digitalheroesco.com"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Built for Digital Heroes
+    </a>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Business & Customer Details</h2>
+
+      <div class="grid">
+        <input id="businessName" type="text" placeholder="Your Business Name" />
+        <input id="customerName" type="text" placeholder="Customer Name" />
+        <input id="invoiceNumber" type="text" placeholder="Invoice Number" />
+        <input id="invoiceDate" type="date" />
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <h2>Invoice Items</h2>
+        <button id="addItemBtn">+ Add Item</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Item / Service</th>
+              <th>Qty</th>
+              <th>Price (₹)</th>
+              <th>GST %</th>
+              <th>Total (₹)</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>GST Type</h2>
+
+      <div class="gst-options">
+        <label>
+          <input type="radio" name="gstType" value="intra" checked />
+          Intra-state (CGST + SGST)
+        </label>
+
+        <label>
+          <input type="radio" name="gstType" value="inter" />
+          Inter-state (IGST)
+        </label>
+      </div>
+    </section>
+
+    <section class="card summary-card">
+      <h2>Invoice Summary</h2>
+
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <strong id="subtotal">₹0.00</strong>
+      </div>
+
+      <div class="summary-row">
+        <span id="taxLabel">CGST + SGST</span>
+        <strong id="taxAmount">₹0.00</strong>
+      </div>
+
+      <div class="summary-row grand-total">
+        <span>Grand Total</span>
+        <strong id="grandTotal">₹0.00</strong>
+      </div>
+
+      <button id="generateBtn" class="generate-btn">
+        Generate Printable Invoice
+      </button>
+    </section>
+
+    <section id="invoicePreview" class="invoice-preview hidden">
+      <div class="invoice-header">
+        <div>
+          <h2 id="previewBusinessName">Your Business Name</h2>
+          <p>GST Invoice</p>
+        </div>
+
+        <div>
+          <p><strong>Invoice No:</strong> <span id="previewInvoiceNumber"></span></p>
+          <p><strong>Date:</strong> <span id="previewInvoiceDate"></span></p>
+          <p><strong>Customer:</strong> <span id="previewCustomerName"></span></p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>GST</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="previewItemsBody"></tbody>
+      </table>
+
+      <div class="preview-total">
+        <p>Subtotal: <strong id="previewSubtotal"></strong></p>
+        <p id="previewTaxLabel">GST: <strong id="previewTaxAmount"></strong></p>
+        <h2>Grand Total: <span id="previewGrandTotal"></span></h2>
+      </div>
+
+      <button onclick="window.print()" class="print-btn">
+        Print / Save as PDF
+      </button>
+    </section>
+  </main>
+
+  <footer>
+    <p>GST Invoice Calculator · Built for Digital Heroes</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
