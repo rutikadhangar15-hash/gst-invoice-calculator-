@@ -91,7 +91,7 @@ async function generateImages() {
 
   generateBtn.disabled = true;
   generateBtn.textContent = "Generating...";
-  statusMessage.textContent = "Generating images. Maximum wait: 10 seconds.";
+  statusMessage.textContent = "Generating images one by one. Please wait...";
 
   imageGallery.innerHTML = "";
 
@@ -99,9 +99,9 @@ async function generateImages() {
     createCard(i);
   }
 
-  try {
-    const tasks = [];
+  let successCount = 0;
 
+  try {
     for (let i = 0; i < count; i++) {
       const seed = Date.now() + i + Math.floor(Math.random() * 100000);
 
@@ -109,21 +109,31 @@ async function generateImages() {
         `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
         `?width=512&height=512&seed=${seed}&nologo=true`;
 
-      tasks.push(loadImageWithTimeout(i, imageUrl));
-    }
+      statusMessage.textContent =
+        `Generating image ${i + 1} of ${count}...`;
 
-    const results = await Promise.all(tasks);
-    const successCount = results.filter(Boolean).length;
+      const success = await loadImageWithTimeout(i, imageUrl);
+
+      if (success) {
+        successCount++;
+      }
+
+      // Wait 2 seconds before asking for the next image
+      if (i < count - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
 
     statusMessage.textContent =
       `${successCount} of ${count} image(s) generated.`;
   } catch (error) {
     console.error(error);
-    statusMessage.textContent = "Something went wrong. Please try again.";
+    statusMessage.textContent = "Something went wrong. Try again.";
   } finally {
     generateBtn.disabled = false;
     generateBtn.textContent = "Generate";
   }
+}
 }
 
 generateBtn.addEventListener("click", generateImages);
