@@ -25,25 +25,48 @@ function loadImage(index, imageUrl) {
     const card = document.getElementById(`image-card-${index}`);
     const img = new Image();
 
+    const timeout = setTimeout(() => {
+      img.src = "";
+
+      card.innerHTML = `
+        <div class="error-text">
+          <div class="placeholder-icon">⚠️</div>
+          <p>Image ${index + 1} timed out.</p>
+          <p>Server may be busy. Try again.</p>
+        </div>
+      `;
+
+      resolve(false);
+    }, 30000);
+
     img.onload = () => {
+      clearTimeout(timeout);
+
       card.innerHTML = "";
       card.appendChild(img);
+
       resolve(true);
     };
 
     img.onerror = () => {
+      clearTimeout(timeout);
+
       card.innerHTML = `
         <div class="error-text">
           <div class="placeholder-icon">⚠️</div>
           <p>Image ${index + 1} failed to load.</p>
-          <p>Please click Generate again.</p>
+          <p>Check Console or try again.</p>
         </div>
       `;
+
       resolve(false);
     };
 
     img.src = imageUrl;
     img.alt = `AI Generated Image ${index + 1}`;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
   });
 }
 
@@ -72,14 +95,13 @@ async function generateImages() {
 
     const imageUrl =
       `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}` +
-      `?width=500&height=500&seed=${seed}&nologo=true`;
+      `?width=512&height=512&seed=${seed}&nologo=true`;
 
     imagePromises.push(loadImage(i, imageUrl));
   }
 
   const results = await Promise.all(imagePromises);
-
-  const successfulImages = results.filter((result) => result === true).length;
+  const successfulImages = results.filter((result) => result).length;
 
   statusMessage.innerText =
     `${successfulImages} of ${imageCount} image(s) generated successfully.`;
