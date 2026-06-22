@@ -4,11 +4,10 @@ const imageGallery = document.getElementById("image-gallery");
 const imageCountSelect = document.getElementById("image-count");
 const statusMessage = document.getElementById("status-message");
 
-function createLoadingCard(index) {
+function createCard(index) {
   const card = document.createElement("div");
-
   card.className = "img-card";
-  card.id = `image-card-${index}`;
+  card.id = `card-${index}`;
 
   card.innerHTML = `
     <div class="loading-text">
@@ -20,94 +19,104 @@ function createLoadingCard(index) {
   imageGallery.appendChild(card);
 }
 
-function loadImage(index, imageUrl) {
+function generateOneImage(index, prompt) {
   return new Promise((resolve) => {
-    const card = document.getElementById(`image-card-${index}`);
+    const card = document.getElementById(`card-${index}`);
     const img = new Image();
 
-    const timeout = setTimeout(() => {
+    let finished = false;
+
+    function finish(success) {
+      if (finished) return;
+      finished = true;
+      resolve(success);
+    }
+
+    const timeoutId = setTimeout(() => {
+      img.onload = null;
+      img.onerror = null;
       img.src = "";
 
       card.innerHTML = `
         <div class="error-text">
           <div class="placeholder-icon">⚠️</div>
           <p>Image ${index + 1} timed out.</p>
-          <p>Server may be busy. Try again.</p>
+          <p>Try generating 1 image first.</p>
         </div>
       `;
 
-      resolve(false);
-    }, 30000);
+      finish(false);
+    }, 15000);
 
     img.onload = () => {
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
 
       card.innerHTML = "";
       card.appendChild(img);
 
-      resolve(true);
+      finish(true);
     };
 
     img.onerror = () => {
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
 
       card.innerHTML = `
         <div class="error-text">
           <div class="placeholder-icon">⚠️</div>
-          <p>Image ${index + 1} failed to load.</p>
-          <p>Check Console or try again.</p>
+          <p>Image ${index + 1} failed.</p>
+          <p>Image server is unavailable.</p>
         </div>
       `;
 
-      resolve(false);
+      finish(false);
     };
 
-    img.src = imageUrl;
-    img.alt = `AI Generated Image ${index + 1}`;
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "cover";
+    const seed = Date.now() + index * 1000;
+
+    img.src =
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+      `?width=512&height=512&seed=${seed}&nologo=true`;
   });
 }
 
 async function generateImages() {
-  const promptText = userPrompt.value.trim();
-  const imageCount = Number(imageCountSelect.value);
+  const prompt = userPrompt.value.trim();
+  const count = Number(imageCountSelect.value);
 
-  if (!promptText) {
-    alert("Please enter a description!");
+  if (!prompt) {
+    alert("Please enter a description.");
     userPrompt.focus();
     return;
   }
 
   generateBtn.disabled = true;
-  generateBtn.innerText = "Generating...";
-  statusMessage.innerText = `Generating ${imageCount} image(s)...`;
-
+  generateBtn.textContent = "Generating...";
+  statusMessage.textContent = `Generating ${count} image(s)...`;
   imageGallery.innerHTML = "";
 
-  const imagePromises = [];
-
-  for (let i = 0; i < imageCount; i++) {
-    createLoadingCard(i);
-
-    const seed = Date.now() + i + Math.floor(Math.random() * 1000000);
-
-    const imageUrl =
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}` +
-      `?width=512&height=512&seed=${seed}&nologo=true`;
-
-    imagePromises.push(loadImage(i, imageUrl));
+  for (let i = 0; i < count; i++) {
+    createCard(i);
   }
 
-  const results = await Promise.all(imagePromises);
-  const successfulImages = results.filter((result) => result).length;
+  try {
+    const tasks = [];
 
-  statusMessage.innerText =
-    `${successfulImages} of ${imageCount} image(s) generated successfully.`;
+    for (let i = 0; i < count; i++) {
+      tasks.push(generateOneImage(i, prompt));
+    }
 
-  generateBtn.disabled = false;
-  generateBtn.innerText = "Generate";
+    const results = await Promise.all(tasks);
+    const successCount = results.filter(Boolean).length;
+
+    statusMessage.textContent =
+      `${successCount} of ${count} image(s) loaded.`;
+  } catch (error) {
+    console.error(error);
+    statusMessage.textContent = "Something went wrong. Please try again.";
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = "Generate";
+  }
 }
 
 generateBtn.addEventListener("click", generateImages);
