@@ -4,7 +4,7 @@ const imageGallery = document.getElementById("image-gallery");
 const imageCountSelect = document.getElementById("image-count");
 const statusMessage = document.getElementById("status-message");
 
-function createLoadingCard(index) {
+function createCard(index) {
   const card = document.createElement("div");
   card.className = "img-card";
   card.id = `card-${index}`;
@@ -19,46 +19,56 @@ function createLoadingCard(index) {
   imageGallery.appendChild(card);
 }
 
-function loadImage(index, imageUrl) {
+function showError(index, message) {
+  const card = document.getElementById(`card-${index}`);
+
+  if (!card) return;
+
+  card.innerHTML = `
+    <div class="error-text">
+      <div class="placeholder-icon">⚠️</div>
+      <p>Image ${index + 1} not generated</p>
+      <small>${message}</small>
+    </div>
+  `;
+}
+
+function loadImageWithTimeout(index, imageUrl) {
   return new Promise((resolve) => {
     const card = document.getElementById(`card-${index}`);
     const img = new Image();
 
-    let finished = false;
+    let done = false;
 
-    function finish(success, message) {
-      if (finished) return;
+    const finish = (success, message = "") => {
+      if (done) return;
 
-      finished = true;
-      clearTimeout(timeoutId);
+      done = true;
+      clearTimeout(timeout);
 
       if (success) {
         card.innerHTML = "";
         card.appendChild(img);
       } else {
-        card.innerHTML = `
-          <div class="error-text">
-            <div class="placeholder-icon">⚠️</div>
-            <p>Image ${index + 1} failed.</p>
-            <p>${message}</p>
-          </div>
-        `;
+        showError(index, message);
       }
 
       resolve(success);
-    }
+    };
 
-    const timeoutId = setTimeout(() => {
+    const timeout = setTimeout(() => {
+      img.onload = null;
+      img.onerror = null;
       img.src = "";
       finish(false, "Server timeout. Please try again.");
-    }, 15000);
+    }, 10000);
 
     img.onload = () => {
-      finish(true, "");
+      finish(true);
     };
 
     img.onerror = () => {
-      finish(false, "Image server did not respond.");
+      finish(false, "Image API failed.");
     };
 
     img.src = imageUrl;
@@ -74,41 +84,46 @@ async function generateImages() {
   const count = Number(imageCountSelect.value);
 
   if (!prompt) {
-    alert("Please enter a description.");
+    alert("Please enter a prompt.");
     userPrompt.focus();
     return;
   }
 
   generateBtn.disabled = true;
   generateBtn.textContent = "Generating...";
-  statusMessage.textContent = "Please wait up to 15 seconds...";
+  statusMessage.textContent = "Generating images. Maximum wait: 10 seconds.";
 
   imageGallery.innerHTML = "";
 
   for (let i = 0; i < count; i++) {
-    createLoadingCard(i);
+    createCard(i);
   }
 
-  const imageTasks = [];
+  try {
+    const tasks = [];
 
-  for (let i = 0; i < count; i++) {
-    const seed = Date.now() + i * 10000;
+    for (let i = 0; i < count; i++) {
+      const seed = Date.now() + i + Math.floor(Math.random() * 100000);
 
-    const imageUrl =
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-      `?width=512&height=512&seed=${seed}&nologo=true`;
+      const imageUrl =
+        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+        `?width=512&height=512&seed=${seed}&nologo=true`;
 
-    imageTasks.push(loadImage(i, imageUrl));
+      tasks.push(loadImageWithTimeout(i, imageUrl));
+    }
+
+    const results = await Promise.all(tasks);
+    const successCount = results.filter(Boolean).length;
+
+    statusMessage.textContent =
+      `${successCount} of ${count} image(s) generated.`;
+  } catch (error) {
+    console.error(error);
+    statusMessage.textContent = "Something went wrong. Please try again.";
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = "Generate";
   }
-
-  const results = await Promise.all(imageTasks);
-  const successCount = results.filter(Boolean).length;
-
-  statusMessage.textContent =
-    `${successCount} of ${count} image(s) generated.`;
-
-  generateBtn.disabled = false;
-  generateBtn.textContent = "Generate";
 }
 
 generateBtn.addEventListener("click", generateImages);
